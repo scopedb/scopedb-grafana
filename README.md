@@ -1,56 +1,34 @@
-# ScopeDB Grafana data source
+# ScopeDB for Grafana
 
-Query ScopeDB with ScopeQL from Grafana: tables, labeled time series, dashboard
-variables, time macros, and catalog browsing. API keys stay in Grafana's secure
-storage; queries run through the Go backend.
+ScopeQL queries, tables, time series, and dashboard variables for Grafana.
 
 ## Install
 
-Supports Grafana OSS 13.1–13.2 on Linux amd64 and arm64. The plugin is unsigned; Grafana Cloud,
-alerting, a dedicated logs mode, and ad hoc filters are unsupported.
+Requires Grafana OSS 13.1–13.2 on Linux amd64 or arm64, a ScopeDB endpoint, and an API key.
 
-1. Download the plugin ZIP from [Releases](https://github.com/scopedb/scopedb-grafana/releases). Private repository downloads require GitHub access.
-2. Extract the ZIP into Grafana's plugins directory, preserving executable permissions.
-3. Set `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=scopedb-scopedb-datasource` and restart Grafana (also after upgrades).
-4. Add a **ScopeDB** data source, enter the workspace endpoint and API key, then **Save & test**.
+1. Download the plugin ZIP from [Releases](https://github.com/scopedb/scopedb-grafana/releases).
+   Unreleased builds: unpack the `scopedb-grafana-unsigned-linux` artifact from a successful [CI run](https://github.com/scopedb/scopedb-grafana/actions/workflows/ci.yml).
+2. Extract the plugin ZIP into Grafana's plugins directory, preserving executable permissions.
+   It should contain `scopedb-scopedb-datasource/plugin.json`.
+3. Set `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=scopedb-scopedb-datasource` and restart Grafana after installation or upgrades.
+4. Add a **ScopeDB** data source, fill in **Endpoint** and **API key**, then **Save & test**.
 
-The endpoint must be reachable from Grafana. All data source users share the key's
-permissions; the plugin does not enforce read-only access.
+Grafana stores the key securely and runs queries on the server, which must reach the
+endpoint. Data source users share the key's permissions; the plugin does not enforce
+read-only access.
 
 ## Query
 
-Open **Explore**, select the data source, and **Browse tables**. Select a table, then
-**Run table query** or **Run time series query** to generate and run a query in one click.
-Time series needs a timestamp column. Choose the right **Time column** and a Grafana
-time range containing your data. You can also enter ScopeQL and press **Ctrl/Cmd+Enter**.
+1. Open **Explore**, select the data source, then **Browse tables** to choose a database, schema, and table.
+2. Choose a **Time column** if available and a Grafana time range containing your data.
+3. Click **Run table query** or **Run time series query** to generate and execute ScopeQL.
 
-Choose **Time series** for one timestamp, numeric values, and optional string/boolean
-labels. Aggregate to one row per timestamp and label set. **Table** is the default.
-`$__timeFilter(column)` uses an inclusive start and exclusive end; `$__timeFrom()` and
-`$__timeTo()` return UTC bounds. `$__timeGroup(column[, '5m'])` buckets timestamps;
-`$__interval` and `$__interval_ms` expose the automatic bucket width (minimum 1s).
+**Time series** needs a timestamp column; **Table** works without one.
+You can also edit ScopeQL directly and press **Ctrl/Cmd+Enter** to run.
 
-Variables expand outside quotes and comments: `${name}` quotes strings,
-`${name:number}` validates numbers, and `${name:identifier}` quotes one identifier.
-Use `contains([${service}], service::any)` for multi-select. Query variables use the
-first column or `__text` / `__value`; leave **Custom all value** blank for **Include All**.
+## Limits
 
-Limits: 10,000 rows, 16 MiB per query HTTP response, 500 series groups. Timeout is
-30s (configurable 1–300s), including queue time; concurrency is 4 (configurable 1–32).
-Cancellation attempts to stop the server query; submission is not retried.
-Query inspector shows expanded ScopeQL, query ID, timing, rows, and bucket interval.
-
-## Develop
-
-Requires Node.js 24, npm 11, Go 1.26.5, Python 3, and Make.
-`make build test lint package` builds the plugin, runs Node and Go behavior tests
-(with the race detector), checks types/style, and creates the ZIP. Tests need no
-workspace credentials. `npm run dev` watches frontend changes. Validate queries and
-catalog browsing in Grafana against a development workspace before releasing.
-
-To release, update the version in `package.json` and `package-lock.json`, commit, and
-push a matching `v<version>` tag. CI checks the version, builds and tests, then creates
-a release draft with the ZIP and SHA-1/SHA-256 checksums. Publish the draft after Grafana
-acceptance checks; tags containing `-` mark prereleases.
-[Catalog publication](https://grafana.com/developers/plugin-tools/publish-a-plugin/publish-a-plugin)
-requires accessible source and package URLs, Grafana review, and signing approval.
+- 10,000 rows, 16 MiB per query HTTP response, and 500 series groups.
+- **Advanced** settings: 30s timeout (1–300s, including queue time), 4 concurrent queries (1–32).
+- Cancellation attempts to stop the server query; submission is not retried.
+- Unsigned plugin. Grafana Cloud, alerting, a dedicated logs mode, and ad hoc filters are unsupported.
