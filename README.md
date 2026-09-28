@@ -2,11 +2,11 @@
 
 将任意 ScopeDB 工作区接入 Grafana OSS。React 查询编辑器通过 Grafana Go backend 调用官方 `goscopedb` SDK，无需额外代理服务；API key 保存在 Grafana `secureJsonData`，浏览器不直接访问 ScopeDB。
 
-当前版本 **0.2.0**，已验证 **Grafana OSS 13.1.0 / Linux amd64**。插件 ID 保持 `scopedb-scopedb-datasource`，兼容 0.1.0 的数据源和查询。其他 Grafana 版本、平台及 Grafana Cloud 安装尚未验证；本包未签名。
+当前版本 **0.1.0**，已验证 **Grafana OSS 13.1.0 / Linux amd64**。首个版本的插件 ID 为 `scopedb-scopedb-datasource`。其他 Grafana 版本、平台及 Grafana Cloud 安装尚未验证；本包未签名。
 
 ## 安装到已有 Grafana OSS
 
-1. 将 `dist/scopedb-scopedb-datasource-0.2.0.zip` 解压到 Grafana 的 plugins 目录，目录内应有 `module.js`、`plugin.json` 和 `gpx_scope_db_linux_amd64`。
+1. 将 `dist/scopedb-scopedb-datasource-0.1.0.zip` 解压到 Grafana 的 plugins 目录，目录内应有 `module.js`、`plugin.json` 和 `gpx_scope_db_linux_amd64`。
 2. 确保后端文件可执行：`chmod +x <plugins>/scopedb-scopedb-datasource/gpx_scope_db_linux_amd64`。
 3. 设置 `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=scopedb-scopedb-datasource`，或在 `grafana.ini` 的 `[plugins]` 下设置对应 `allow_loading_unsigned_plugins`。
 4. **重启 Grafana**，打开 Connections → Data sources → Add data source → ScopeDB。
@@ -51,7 +51,7 @@ ORDER BY time
 LIMIT 10000
 ```
 
-将 Format 设为 **Time series**：一个 timestamp 列作为时间轴，数值列作为指标，string / boolean 列作为维度标签。连接器按时间排序，为不同标签组合返回独立曲线；重复时间点需在查询中聚合。Table 模式保留所有原始列，0.1.0 查询继续默认使用 Table。
+将 Format 设为 **Time series**：一个 timestamp 列作为时间轴，数值列作为指标，string / boolean 列作为维度标签。连接器按时间排序，为不同标签组合返回独立曲线；重复时间点需在查询中聚合。Table 模式保留所有原始列，未指定 Format 的查询默认使用 Table。
 
 ## Dashboard 变量
 
