@@ -1,0 +1,51 @@
+{
+  "name": "scopedb-grafana",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch",
+    "test": "node --test tests/*.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests *.mjs"
+  },
+  "author": "ScopeDB",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@grafana/eslint-config": "^9.0.0",
+    "@grafana/tsconfig": "^2.2.0",
+    "@stylistic/eslint-plugin-ts": "^4.4.0",
+    "@swc/core": "^1.15.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
+    "copy-webpack-plugin": "^14.0.0",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.0",
+    "eslint-plugin-jsdoc": "^52.0.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "prettier": "^3.6.0",
+    "swc-loader": "^0.2.0",
+    "typescript": "5.9.2",
+    "webpack": "^5.101.0",
+    "webpack-cli": "^6.0.0",
+    "webpack-subresource-integrity": "^5.1.0",
+    "webpack-virtual-modules": "^0.6.2"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@grafana/data": "13.1.0",
+    "@grafana/runtime": "13.1.0",
+    "@grafana/ui": "13.1.0",
+    "@grafana/schema": "13.1.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "rxjs": "7.8.2"
+  },
+  "packageManager": "npm@11.8.0",
+  "type": "module"
+}

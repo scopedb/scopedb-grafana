@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "ScopeDB",
+  "id": "scopedb-scopedb-datasource",
+  "metrics": true,
+  "backend": true,
+  "executable": "gpx_scope_db",
+  "info": {
+    "description": "Query ScopeDB with ScopeQL, tables, time series, dashboard variables, and catalog browsing.",
+    "author": {
+      "name": "ScopeDB"
+    },
+    "keywords": [
+      "scopedb",
+      "scopeql",
+      "datasource",
+      "metrics"
+    ],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Documentation",
+        "url": "https://github.com/scopedb/scopedb-grafana#readme"
+      }
+    ],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": "13.1.0",
+    "plugins": []
+  },
+  "logs": false,
+  "alerting": false
+}
