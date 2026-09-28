@@ -1,5 +1,6 @@
 """Create a Linux amd64 plugin archive from built dist/."""
 
+import hashlib
 import json
 import pathlib
 import zipfile
@@ -17,3 +18,6 @@ with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
     for name in files:
         archive.write(dist / name, pathlib.Path(plugin_id) / name)
 print(target.relative_to(root))
+for algorithm in ("sha1", "sha256"):
+    digest = hashlib.new(algorithm, target.read_bytes()).hexdigest()
+    target.with_suffix(f".zip.{algorithm}").write_text(f"{digest}  {target.name}\n")
