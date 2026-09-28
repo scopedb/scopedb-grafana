@@ -12,6 +12,9 @@ assert "%" not in version, "Run make build first"
 binary = dist / (manifest["executable"] + "_linux_amd64")
 assert binary.is_file(), "Missing Linux amd64 backend; run make build"
 assert (dist / "module.js").is_file(), "Missing frontend; run make build"
+for include in manifest.get("includes", []):
+    if include["type"] == "dashboard":
+        assert (dist / include["path"]).is_file(), "Missing bundled dashboard"
 target = dist / f"{plugin_id}-{version}.zip"
 with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
     for file in sorted(dist.rglob("*")):

@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/scopedb/scope-db/pkg/plugin"
+	"github.com/scopedb/scopedb-grafana/pkg/plugin"
 )
 
 func main() {

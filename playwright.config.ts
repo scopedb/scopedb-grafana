@@ -4,6 +4,7 @@ import baseConfig from './.config/playwright.config';
 
 export default defineConfig<PluginOptions>(baseConfig, {
   workers: 1,
+  testIgnore: process.env.SCOPEDB_EXAMPLES === '1' ? [] : ['**/fixture-*.spec.ts', '**/bluesky.spec.ts'],
   timeout: 90_000,
   expect: { timeout: 30_000 },
   use: {

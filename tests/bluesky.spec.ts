@@ -1,6 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
-import overview from '../provisioning/dashboards/bluesky-overview.json';
-import content from '../provisioning/dashboards/bluesky-content.json';
+test.use({ provisioningRootDir: './examples/provisioning' });
+import overview from '../examples/provisioning/dashboards/bluesky-overview.json';
+import content from '../examples/provisioning/dashboards/bluesky-content.json';
 
 test.use({ viewport: { width: 1680, height: 1600 } });
 

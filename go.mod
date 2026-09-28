@@ -1,4 +1,4 @@
-module github.com/scopedb/scope-db
+module github.com/scopedb/scopedb-grafana
 
 go 1.26.5
 

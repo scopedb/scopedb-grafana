@@ -1,116 +1,102 @@
-# ScopeDB → Grafana OSS PoC
+# ScopeDB Grafana connector
 
-ScopeDB 数据源插件：React/TypeScript 编辑器 → Grafana Go backend → `goscopedb` → ScopeDB。无需独立代理服务，浏览器不直接连接 ScopeDB。
+将任意 ScopeDB 工作区接入 Grafana OSS。React 查询编辑器通过 Grafana Go backend 调用官方 `goscopedb` SDK，无需额外代理服务；API key 保存在 Grafana `secureJsonData`，浏览器不直接访问 ScopeDB。
 
-本阶段仅供可信管理员在隔离环境验证。支持原始 ScopeQL、带类型的 DataFrame、UTC 时间过滤、超时和主动取消。已用真实 Bluesky 数据验证 Table、Stat、Time series、Bar chart 和 Pie chart 原生面板。原始查询可以写数据，本插件不提供强制只读检查。尚未签名，不支持 Grafana Cloud 安装。
+当前版本 **0.2.0**，已验证 **Grafana OSS 13.1.0 / Linux amd64**。插件 ID 保持 `scopedb-scopedb-datasource`，兼容 0.1.0 的数据源和查询。其他 Grafana 版本、平台及 Grafana Cloud 安装尚未验证；本包未签名。
 
-Bluesky 实时总览与内容分析两页 Dashboard 的入口、数据口径和复现步骤见 [dashboards/bluesky/README.md](dashboards/bluesky/README.md)。
+## 安装到已有 Grafana OSS
 
-## 固定环境
+1. 将 `dist/scopedb-scopedb-datasource-0.2.0.zip` 解压到 Grafana 的 plugins 目录，目录内应有 `module.js`、`plugin.json` 和 `gpx_scope_db_linux_amd64`。
+2. 确保后端文件可执行：`chmod +x <plugins>/scopedb-scopedb-datasource/gpx_scope_db_linux_amd64`。
+3. 设置 `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=scopedb-scopedb-datasource`，或在 `grafana.ini` 的 `[plugins]` 下设置对应 `allow_loading_unsigned_plugins`。
+4. **重启 Grafana**，打开 Connections → Data sources → Add data source → ScopeDB。
+5. 填写 Grafana 服务器可访问的 workspace Endpoint、API key 和 timeout，点击 Save & test。成功会执行 `SELECT 1 AS ok`。
 
-- Grafana OSS **13.1.0**，Linux **amd64**；其他版本和架构未验证。
-- 插件 ID：`scopedb-scopedb-datasource`；版本：`0.1.0`。
-- Go 1.26.5（go.mod / Go 自动工具链）、Grafana Go SDK v0.296.5、goscopedb v0.6.3。
-- Node.js 24、npm 11；前端 Grafana 包 13.1.0；具体依赖锁定在 package-lock.json。
-- Docker Engine / Compose v2；Python 3 用于打包和冒烟脚本。
+升级时替换整个插件目录并重启；数据源配置仍保存在 Grafana 中。API key 的 ScopeDB 权限决定查询权限，所有使用该数据源的用户共享该凭据。插件执行原始 ScopeQL，不提供强制只读授权边界；请按部署环境配置适当的服务凭据和 Grafana 访问权限。
 
-## 启动演示
+## 从源码启动
 
-先准备可从 Grafana 服务器访问的 ScopeDB 工作区与 API key。复制配置，只在本地填写密钥：
+依赖 Node.js 24 / npm 11、Go 1.26.5、Docker Compose v2 和 Python 3。Go / npm 依赖已锁定。
 
 ```sh
 mkdir -p .local
 cp .env.example .local/env
 chmod 600 .local/env
-# 编辑 .local/env 中 SCOPEDB_ENDPOINT 和 SCOPEDB_API_KEY
+# 在本机填写 SCOPEDB_ENDPOINT / SCOPEDB_API_KEY，也可以启动后通过 UI 配置
 make build
-make test
 make dev
 ```
 
-`make dev` 读取 `.local/env`（可通过 `ENV_FILE=/path/to/file` 替换）；Compose 自动创建独立数据卷，在 **127.0.0.1:13000** 启动 Grafana。默认演示账号 `admin / admin`，仅绑定本机；可在首次启动前修改 GRAFANA_PASSWORD。已有数据卷的密码不会随该变量重置。
+访问 [本机 Grafana](http://127.0.0.1:13000)，演示账号 `admin / admin`。首次启动前可设置 `GRAFANA_PASSWORD`；已有数据卷不会因此重设密码。本机端口由 `GRAFANA_PORT` 控制。默认安装只 provision 通用数据源和 Getting started Dashboard，不依赖任何业务表，不创建 ScopeDB 数据。
 
-数据源由 provisioning 注入，API key 进入 `secureJsonData`。打开 Connections → Data sources → ScopeDB → Save & test；后端实际执行 `SELECT 1 AS ok`。
+也可将 `provisioning/datasources/datasources.yml` 用在已有部署中，通过环境变量传入凭据。数据源 UID 可自行修改，Dashboard 必须引用对应 UID。
 
-示例 Dashboard 位于 ScopeDB 文件夹。其固定时间范围为 **2026-09-28 00:00–00:20 UTC**，查询下述专用测试表。首次验收仅运行一次：
+## 查询编辑器
 
-```sh
-scope query --file fixtures/create.scopeql
-scope query --file fixtures/insert.scopeql
-make smoke
-```
+选择 ScopeDB 数据源后：
 
-创建脚本不使用 IF NOT EXISTS；表已存在时不要重复插入。此任务已创建并插入该三行测试数据，当前工作区可直接运行 smoke。换工作区时重新执行建表和插入脚本。
+1. 点击 **Browse tables**，选择 database → schema → table。目录通过 SDK 分页读取，字段和类型会显示在编辑器旁。
+2. 选择时间列，点击 **Insert table query** 或 **Insert time series query** 生成起始查询。只有显式点击插入按钮才会替换查询。
+3. 使用代码编辑器、字段／函数／宏补全修改 ScopeQL，按 **Ctrl/Cmd+Enter** 或 Run query 执行。
+4. 选择 Grafana 原生 Table、Stat、Time series、Bar chart 或 Pie chart 可视化。
 
-## 查询
-
-新建 Table 面板，选择 ScopeDB 数据源，输入：
+目录不可用时仍可直接输入 ScopeQL。生成的表路径按 database/schema/table 分别引用；不依赖工作区默认 schema。完整说明见 [docs/queries.md](docs/queries.md)。
 
 ```sql
-FROM grafana_oss_poc_20260928
+FROM events
 WHERE $__timeFilter(event_time)
-SELECT event_time, service, latency_ms, success, detail
-ORDER BY event_time
+SELECT $__timeGroup(event_time) AS time, service
+GROUP BY time, service AGGREGATE count() AS events
+ORDER BY time
+LIMIT 10000
+```
+
+将 Format 设为 **Time series**：一个 timestamp 列作为时间轴，数值列作为指标，string / boolean 列作为维度标签。连接器按时间排序，为不同标签组合返回独立曲线；重复时间点需在查询中聚合。Table 模式保留所有原始列，0.1.0 查询继续默认使用 Table。
+
+## Dashboard 变量
+
+支持 Custom、Constant 和 Query 变量；Query 变量填写 ScopeQL，默认使用第一列，或返回 `__text` / `__value` 分离显示名与实际值。
+
+```sql
+FROM events
+GROUP BY service AGGREGATE count() AS events
+SELECT service AS __text, service AS __value
+ORDER BY __text
 LIMIT 1000
 ```
 
-按 Grafana Run queries 或 Ctrl/Cmd+Enter 执行。宏只接受未加引号的列名或 `table.column`；展开为 UTC 的 `column >= from AND column < to`，跳过字符串和注释。此版不支持 Dashboard 变量、其他宏、日志专用视图或告警。返回按时间升序排列的时间列与数值列时，可直接使用 Grafana 原生 Time series 面板；插件尚无独立的时序查询编辑模式。
+在面板中使用：`service = ${service}`；多选与 All 使用 `contains([${service}], service::any)`。变量自动作为 ScopeQL 字面量转义，**不要再手动加引号**。启用 All 时，Custom all value 留空。数字用 `${limit:number}`；单个标识符用 `${table:identifier}`；不支持 `:raw` 插值。详见 [变量和宏](docs/queries.md)。
 
-数值、布尔和时间映射到对应 DataFrame 类型，NULL 保持为空。超过 JavaScript 精确整数范围的整列数值、非有限浮点数整列、复杂类型、binary 和 interval 显示原始字符串。结果上限 10,000 行、单个 HTTP 响应 16 MiB，超限返回错误；查询应显式带 LIMIT。
+## 示例与验证
 
-默认 timeout 30 秒，可配 1–300 秒，覆盖提交、轮询和结果下载，同时传给 ScopeDB 执行超时。取消或异常中断后，用独立 2 秒 context 尝试服务端 Cancel；取消结果无法确认时显示错误。已经终止的任务不再发送 Cancel。不自动重试提交，避免原始查询被重复执行。
-
-## 安装到另一个 OSS 测试实例
+安装包内置 **ScopeDB · Getting started**，可从数据源的 Dashboards 页面导入；无需指定业务表。Bluesky 和旧三行 fixture 已移到 `examples/`，只在显式启用时加载：
 
 ```sh
-make package
-# 输出 dist/scopedb-scopedb-datasource-0.1.0.zip
-mkdir -p .local/installed
-unzip dist/scopedb-scopedb-datasource-0.1.0.zip -d .local/installed
-chmod +x .local/installed/scopedb-scopedb-datasource/gpx_scope_db_linux_amd64
-
-GRAFANA_PORT=13001 PLUGIN_DIR=./.local/installed/scopedb-scopedb-datasource \
-  docker compose --env-file .local/env -p scopedb-grafana-install-test up -d
-
-GRAFANA_URL=http://127.0.0.1:13001 make smoke
+# 将 examples/env.example 中所需变量追加到 .local/env，并填写真实凭据
+make dev-examples
 ```
 
-这使用 ZIP 解压目录、独立容器和全新 Grafana 数据卷。停止该测试实例：
+此 overlay 同时加载 Bluesky 与旧 fixture 示例；只需要其中一套时，可单独复制对应 provisioning 文件。示例需要已有的相应表，连接器安装本身不需要它们。Bluesky 查询口径见 [dashboards/bluesky/README.md](dashboards/bluesky/README.md)。
 
-```sh
-docker compose --env-file .local/env -p scopedb-grafana-install-test down
-```
-
-对于用户已有的 **隔离 OSS 测试部署**，将 ZIP 解压后的插件目录复制到该 Grafana 的 plugins 目录，确保后端文件可执行；仅允许此 ID 加载未签名插件：
-
-```ini
-[plugins]
-allow_loading_unsigned_plugins = scopedb-scopedb-datasource
-```
-
-Docker 环境对应 `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=scopedb-scopedb-datasource`。重启 Grafana 后添加 ScopeDB 数据源，填写 Endpoint、API key、timeout。更新插件文件（尤其 plugin.json）后也需重启。可选复制 provisioning 模板并通过环境变量提供凭据；不要把真实密钥写进版本库。Grafana Cloud 和官方目录认证留待后续阶段。
-
-## 验证与开发入口
-
-| 命令 | 行为 |
+| 命令 | 作用 |
 | --- | --- |
-| `make build` | npm ci、类型检查、官方 webpack 构建、官方 mage Linux amd64 构建 |
-| `make test` | 类型检查、前端测试入口、Go 竞态检测和后端行为测试 |
-| `make dev` | 启动固定 Grafana OSS 与 provisioning |
-| `make smoke` | 在实际 Grafana 上验证真实 ScopeDB 连接、字段、NULL、时间边界和错误 |
-| `make package` | 将已构建 dist 打包为按插件 ID 分目录的 ZIP |
-| `make e2e` | 官方 @grafana/plugin-e2e 浏览器验收 |
-| `make stop` | 停止主测试实例，保留数据卷 |
+| `make build` | npm ci、类型检查、官方 webpack + mage 构建 |
+| `make test` | TypeScript 检查、变量单元测试、Go 竞态及后端行为测试 |
+| `make dev` / `make stop` | 启停本机通用实例，保留数据卷 |
+| `make smoke` | 对任意真实工作区验证连接、宏、转义、时序和目录；不写业务数据 |
+| `make e2e` | 官方 plugin-e2e 验证配置、编辑器、目录、变量和通用 Dashboard |
+| `make dev-examples` | 加载可选业务示例 |
+| `make smoke-fixture` / `make e2e-examples` | 回归原 fixture 和 Bluesky 示例 |
+| `make package` | 打包已构建的 Linux amd64 插件 ZIP |
 
-浏览器测试首次执行前运行 `npx playwright install chromium`；需要 Linux 浏览器系统依赖。设置 `GRAFANA_URL` 可切换实例。若本机设置了全局代理，E2E 命令设置 `NO_PROXY=127.0.0.1,localhost`。
+浏览器首次执行前安装 `npx playwright install chromium` 及其 Linux 系统依赖。全局代理环境下设置 `NO_PROXY=127.0.0.1,localhost`。`GRAFANA_URL` 可切换测试实例；smoke 支持 `SCOPEDB_DATASOURCE_UID`、`GRAFANA_USER`、`GRAFANA_PASSWORD` 和 `ENV_FILE`。
 
-smoke 缺少真实 Endpoint/API key 时失败，不回退为模拟数据；期间会创建并删除一个仅存在于本机 Grafana 的错误凭据数据源。当前 smoke 的 fixture 表名和数据固定在示例 Dashboard 与 fixtures 中。
+## 执行约束
 
-生命周期单元测试通过实际 SDK 连接受控 HTTP 测试服务器，覆盖成功/失败/取消、提交响应丢失、超时、取消失败和结果类型校验。真实查询验证与受控故障测试的记录见 VALIDATION.md。
-
-## 本次测试资源
-
-- 使用本地 Scope CLI 创建的专用 key：`grafana-oss-poc-20260928`，72 小时有效；仅保存于被忽略的 `.local/`，从未写入源码/ZIP。
-- ScopeDB 表：`grafana_oss_poc_20260928`，三行合成数据；保留用于复现。
-- 现有 3000 端口 Grafana 不参与测试。
-- key 到期后，在本机创建新 key，更新 `.local/env` 并 `make dev` 使容器重建；勿将 key 发到聊天中。
+- timeout 1–300 秒，覆盖排队、提交、轮询和下载；取消时尝试终止 ScopeDB 服务端任务，不自动重试提交。
+- 每个数据源实例默认最多 4 个并发请求，可配 1–32；不同查询的错误保留各自 RefID。
+- 最多 10,000 行，单次 HTTP 响应上限 16 MiB；超限报错，不静默截断。查询应显式 LIMIT；返回行数限制不等于扫描量限制。
+- 时序最多 500 个标签组合；数值 NULL 保留，缺失桶不补零。时间／维度 NULL 或重复点返回可操作的错误。
+- Table 保留大整数、非有限数值和复杂类型的原始字符串；Time series 拒绝不安全数值和复杂列，避免误画图。
+- Query inspector 提供展开后的查询、query ID、耗时、行数和自动分桶间隔。
+- 告警、日志专用模式、Ad hoc filters、签名和官方目录认证尚未包含。

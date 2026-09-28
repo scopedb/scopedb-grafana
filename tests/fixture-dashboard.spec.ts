@@ -1,5 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
-import fixture from '../provisioning/dashboards/scopedb.json';
+test.use({ provisioningRootDir: './examples/provisioning' });
+import fixture from '../examples/provisioning/dashboards/scopedb.json';
 
 test('provisioned dashboard displays real rows and follows the time picker', async ({
   gotoDashboardPage,

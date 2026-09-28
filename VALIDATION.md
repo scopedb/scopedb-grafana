@@ -1,4 +1,39 @@
-# OSS PoC 验收记录
+# 通用连接器 0.2.0 验收记录
+
+验收日期：2026-09-28。使用真实 ScopeDB 工作区完成集成检查；浏览器使用官方 `@grafana/plugin-e2e`。原 0.1.0 验收记录保留在本文后半部。
+
+## 环境与兼容性
+
+- Grafana OSS 13.1.0 / Linux amd64；ScopeDB Go SDK v0.6.3；依赖锁定。
+- 插件 ID 沿用 `scopedb-scopedb-datasource`，旧数据源、Table 查询和 Bluesky Dashboard 无需迁移查询模型。
+- 默认 provisioning 仅包含通用 ScopeDB 数据源与 Getting started Dashboard；fixture / Bluesky 移至可选 examples overlay。
+- 主实例保留在 `127.0.0.1:13000`，Compose project 为原 `scopedb-grafana-poc`。未操作其他 Grafana 部署。
+- ZIP 安装使用独立 project `scopedb-grafana-connector-install-test`、端口 13001 和独立数据卷，只挂载从 ZIP 解压的插件目录。
+
+## 验证结果
+
+- TypeScript、ESLint、官方 webpack 和 mage 构建通过；Jest 4 个变量转义与插值用例通过；Go `-race` 后端测试通过。
+- 后端测试覆盖宏扫描、自适应间隔、时序排序／NULL／重复点／空结果／标签上限、目录分页参数、排队超时和实例并发限制，保留原有执行生命周期与取消测试。
+- 主实例通用 smoke 全部通过：真实连接与密钥存储、标量查询、时间范围、自动间隔、ScopeQL 字面量转义、带标签时序、负时间桶、错误传播、目录及字段发现。
+- 原 fixture smoke 14 项通过：真实数据、NULL、上下时间边界、空结果、语法／执行／无效凭据错误等。
+- 主实例浏览器 **13 passed**（含登录准备）：配置、表格编辑、Ctrl+Enter、语法错误、目录生成查询、编辑后保留 Time series 格式与标签、Query 变量 All／单选／数字格式、入门 Dashboard，以及原 fixture 和两个 Bluesky Dashboard。
+- 独立 ZIP 实例通用 smoke 全部通过；浏览器 **8 passed**（含登录准备）。验证默认只有一个通用数据源和一个入门 Dashboard；验收后已清理专用容器、网络及数据卷。日志：`artifacts/connector-install-smoke.txt`、`artifacts/connector-install-e2e.txt`。
+- 源码与最终 ZIP 扫描未发现本地测试 API key；凭据、运行数据、构建输出及截图由 `.gitignore` 排除。
+
+本地日志在 `artifacts/connector-e2e.txt`、`artifacts/connector-smoke.txt`、`artifacts/connector-fixture-smoke.txt`；目录编辑器截图为 `artifacts/generic-query-editor.png`。
+
+## 发布包
+
+- `dist/scopedb-scopedb-datasource-0.2.0.zip`（9,687,826 bytes），顶层目录为插件 ID，包含前端、Linux amd64 后端及内置 Dashboard。
+- SHA-256：`e7ad2aef12c88ef72845d772ba46fa046c3300d912b3027e45df856e12f3e3bf`。
+
+## 交付范围
+
+这是可安装的通用 ScopeDB 数据源连接器，仍为未签名版本。仅验证 Grafana 13.1.0 / Linux amd64；其他版本／架构、告警、日志模式、Ad hoc filters 和 Grafana Cloud 尚未包含。故障／取消行为由受控 HTTP 服务验证，真实云端查询与目录由集成检查验证；本次没有向业务表写入测试数据。
+
+---
+
+# 0.1.0 OSS PoC 历史验收记录
 
 验收日期：2026-09-28。结论：PLAN.md 六项验收通过；仅覆盖内部 OSS PoC。
 

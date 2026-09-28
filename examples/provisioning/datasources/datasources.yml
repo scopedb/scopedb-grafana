@@ -1,14 +1,13 @@
 apiVersion: 1
 datasources:
-  - name: ScopeDB
-    uid: scopedb
+  - name: ScopeDB · Fixture
+    uid: scopedb-poc
     type: scopedb-scopedb-datasource
     access: proxy
-    isDefault: true
+    isDefault: false
     editable: true
     jsonData:
-      endpoint: $SCOPEDB_ENDPOINT
+      endpoint: $POC_SCOPEDB_ENDPOINT
       timeoutSeconds: 30
-      maxConcurrentQueries: 4
     secureJsonData:
-      apiKey: $SCOPEDB_API_KEY
+      apiKey: $POC_SCOPEDB_API_KEY

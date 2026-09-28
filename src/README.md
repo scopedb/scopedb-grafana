@@ -1,11 +1,11 @@
 # ScopeDB
 
-Internal proof of concept for Grafana OSS 13.1.0 on Linux amd64.
+Connect Grafana to any ScopeDB workspace using the official Go SDK. Supports raw ScopeQL, table and labeled time-series results, Dashboard variables, adaptive time buckets, and catalog-assisted query editing.
 
-Configure the ScopeDB workspace Endpoint, API key, and timeout. Save & test runs SELECT 1 AS ok. The key is stored in Grafana secureJsonData and used only by the backend.
+Configure an Endpoint reachable from the Grafana server and an API key, then Save & test. Credentials stay in Grafana secureJsonData and are used only by the backend. Import the included Getting started dashboard or add a panel, click Browse tables, select a table, and insert a query template. Ctrl/Cmd+Enter executes the query.
 
-Use a Table panel and enter raw ScopeQL. The backend calls the official goscopedb SDK directly. $__timeFilter(event_time) expands to UTC [from, to). NULL values are preserved; complex values and unsafe integers are displayed as strings. Use LIMIT (maximum 10,000 rows / 16 MiB per HTTP response).
+Use $__timeFilter(event_time) for the selected UTC range and $__timeGroup(event_time) for adaptive buckets. Query variables support __text / __value. Variables are quoted automatically: service = ${service}, or contains([${service}], service::any) for multiple values. Leave Custom all value blank. Numeric values use ${limit:number}; a single identifier uses ${table:identifier}.
 
-Only trusted administrators should use this unsigned PoC in an isolated OSS instance. Queries are not restricted to read-only statements. Time series, dashboard variables, alerts, plugin signing and Grafana Cloud are outside this version.
+Time series requires one timestamp column, numeric values, and optional string/boolean dimensions. Aggregate duplicate timestamps per dimension set. Limits: 10,000 rows, 500 series groups, and 16 MiB per HTTP response. Default timeout is 30 seconds and concurrency is 4 requests per data source instance. Query inspector shows expanded ScopeQL and execution diagnostics.
 
-Allow unsigned loading for scopedb-scopedb-datasource only, and restart Grafana after installation or plugin updates. The source README includes Docker Compose, provisioning, example dashboard, build and verification commands.
+Version 0.2.0 is tested with Grafana OSS 13.1.0 on Linux amd64. The package is unsigned: allow scopedb-scopedb-datasource explicitly and restart Grafana after installation or upgrades. Existing 0.1.0 queries remain compatible. ScopeDB permissions follow the configured API key; this connector does not enforce read-only ScopeQL. Alerting, logs-specific mode, ad hoc filters and Grafana Cloud installation are not included.

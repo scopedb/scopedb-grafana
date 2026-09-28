@@ -7,11 +7,16 @@
   "backend": true,
   "executable": "gpx_scope_db",
   "info": {
-    "description": "Query ScopeDB with ScopeQL and display table results. Internal OSS proof of concept.",
+    "description": "Connect Grafana to any ScopeDB workspace with ScopeQL, catalog discovery, variables, tables and time series.",
     "author": {
       "name": "Scopedb"
     },
-    "keywords": ["datasource"],
+    "keywords": [
+      "scopedb",
+      "scopeql",
+      "datasource",
+      "metrics"
+    ],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
@@ -26,5 +31,12 @@
     "plugins": []
   },
   "logs": false,
-  "alerting": false
+  "alerting": false,
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "ScopeDB \u00b7 Getting started",
+      "path": "dashboards/getting-started.json"
+    }
+  ]
 }

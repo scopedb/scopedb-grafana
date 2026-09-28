@@ -1,1 +1,1 @@
-For more information see [Provision dashboards and data sources](https://grafana.com/tutorials/provision-dashboards-and-data-sources/)
+Default provisioning contains a generic ScopeDB connection and a Getting started dashboard. Set SCOPEDB_ENDPOINT / SCOPEDB_API_KEY on the Grafana server, or configure the data source in the UI. No application tables are required. Optional historical fixtures and Bluesky dashboards live under examples/provisioning and are loaded only by docker-compose.examples.yaml.

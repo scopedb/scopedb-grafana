@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,12 +22,14 @@ import (
 var (
 	_ backend.QueryDataHandler      = (*Datasource)(nil)
 	_ backend.CheckHealthHandler    = (*Datasource)(nil)
+	_ backend.CallResourceHandler   = (*Datasource)(nil)
 	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
 )
 
 type settings struct {
-	Endpoint       string `json:"endpoint"`
-	TimeoutSeconds int    `json:"timeoutSeconds"`
+	Endpoint             string `json:"endpoint"`
+	TimeoutSeconds       int    `json:"timeoutSeconds"`
+	MaxConcurrentQueries int    `json:"maxConcurrentQueries"`
 }
 
 type Datasource struct {
@@ -35,6 +38,7 @@ type Datasource struct {
 	timeout    time.Duration
 	apiKey     string
 	configErr  error
+	slots      chan struct{}
 }
 
 func NewDatasource(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -61,6 +65,14 @@ func NewDatasource(ctx context.Context, s backend.DataSourceInstanceSettings) (i
 		return d, nil
 	}
 	d.timeout = time.Duration(cfg.TimeoutSeconds) * time.Second
+	if cfg.MaxConcurrentQueries == 0 {
+		cfg.MaxConcurrentQueries = 4
+	}
+	if cfg.MaxConcurrentQueries < 1 || cfg.MaxConcurrentQueries > 32 {
+		d.configErr = errors.New("Concurrent queries must be 1–32")
+		return d, nil
+	}
+	d.slots = make(chan struct{}, cfg.MaxConcurrentQueries)
 	opts, err := s.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, err
@@ -92,17 +104,26 @@ func (d *Datasource) Dispose() {
 }
 
 func (d *Datasource) execute(parent context.Context, text string) (result *scopedb.ResultSet, err error) {
+	return d.executeStatement(parent, text, uuid.New())
+}
+
+func (d *Datasource) executeStatement(parent context.Context, text string, id uuid.UUID) (result *scopedb.ResultSet, err error) {
 	if d.configErr != nil {
 		return nil, d.configErr
 	}
 	ctx, cancel := context.WithTimeout(parent, d.timeout)
 	defer cancel()
+	select {
+	case d.slots <- struct{}{}:
+		defer func() { <-d.slots }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 	ctx = httpclient.WithResponseLimit(ctx, 16<<20)
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 	statement := d.client.Statement(text)
-	id := uuid.New()
 	statement.ID = &id
 	statement.ExecTimeout = fmt.Sprintf("PT%dS", max(1, int(d.timeout.Seconds())))
 	// Retain our ID even if submission times out after reaching the server.
@@ -110,6 +131,10 @@ func (d *Datasource) execute(parent context.Context, text string) (result *scope
 	defer func() {
 		if err == nil {
 			return
+		}
+		var api *scopedb.Error
+		if handle.LastStatus() == nil && errors.As(err, &api) && (api.HTTPStatus == 400 || api.HTTPStatus == 401 || api.HTTPStatus == 403 || api.HTTPStatus == 404) {
+			return // A rejected submission has no running server job to cancel.
 		}
 		if status := handle.LastStatus(); status != nil && status.Terminated() {
 			return
@@ -151,17 +176,31 @@ type queryModel struct {
 	QueryText    string `json:"queryText"`
 	ModelVersion int    `json:"modelVersion"`
 	Hide         bool   `json:"hide"`
+	Format       string `json:"format"`
 }
 
 func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 	for _, q := range req.Queries {
-		response.Responses[q.RefID] = d.query(ctx, q)
+		wg.Add(1)
+		go func(q backend.DataQuery) {
+			defer wg.Done()
+			result := d.query(ctx, q)
+			mu.Lock()
+			response.Responses[q.RefID] = result
+			mu.Unlock()
+		}(q)
 	}
+	wg.Wait()
 	return response, nil
 }
 
 func (d *Datasource) query(ctx context.Context, q backend.DataQuery) backend.DataResponse {
+	if d.configErr != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, d.safeError(d.configErr))
+	}
 	var qm queryModel
 	if err := json.Unmarshal(q.JSON, &qm); err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, "Invalid query JSON")
@@ -169,25 +208,66 @@ func (d *Datasource) query(ctx context.Context, q backend.DataQuery) backend.Dat
 	if qm.Hide {
 		return backend.DataResponse{}
 	}
-	if qm.ModelVersion > 1 {
+	if qm.ModelVersion > 2 {
 		return backend.ErrDataResponse(backend.StatusBadRequest, "Unsupported query model version")
 	}
 	if strings.TrimSpace(qm.QueryText) == "" {
 		return backend.ErrDataResponse(backend.StatusBadRequest, "ScopeQL query is empty")
 	}
-	expanded, err := expandTimeFilter(qm.QueryText, q.TimeRange.From, q.TimeRange.To)
+	if qm.Format != "" && qm.Format != "table" && qm.Format != "time_series" {
+		return backend.ErrDataResponse(backend.StatusBadRequest, "Unknown result format; choose Table or Time series")
+	}
+	expanded, err := expandMacros(qm.QueryText, q)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
-	rs, err := d.execute(ctx, expanded)
+	started := time.Now()
+	id := uuid.New()
+	rs, err := d.executeStatement(ctx, expanded, id)
 	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, d.safeError(err))
+		return backend.ErrDataResponse(errorStatus(err), d.safeError(err)+" (query "+id.String()+")")
 	}
 	frame, err := toFrame(q.RefID, rs)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, d.safeError(err))
 	}
-	return backend.DataResponse{Frames: data.Frames{frame}}
+	frames := data.Frames{frame}
+	if qm.Format == "time_series" {
+		if err := validateSeriesTypes(rs.Schema, frame); err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+		}
+		frames, err = timeSeriesFrames(frame)
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, d.safeError(err))
+		}
+	}
+	for _, f := range frames {
+		f.Meta.ExecutedQueryString = expanded
+		f.Meta.Custom = map[string]any{"queryId": id.String(), "durationMs": time.Since(started).Milliseconds(), "rows": rs.TotalRows, "intervalMs": queryInterval(q).Milliseconds()}
+	}
+	return backend.DataResponse{Frames: frames}
+}
+
+func errorStatus(err error) backend.Status {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return backend.StatusTimeout
+	}
+	if errors.Is(err, context.Canceled) {
+		return backend.Status(499)
+	}
+	var api *scopedb.Error
+	if errors.As(err, &api) {
+		if api.StatementDetails != nil && (api.StatementDetails.Code == scopedb.StatementErrorCodeExecutionTimeout || api.StatementDetails.Code == scopedb.StatementErrorCodePendingTimeout) {
+			return backend.StatusTimeout
+		}
+		if api.HTTPStatus >= 400 && api.HTTPStatus <= 599 {
+			return backend.Status(api.HTTPStatus)
+		}
+		if api.Kind == scopedb.ErrorKindStatementFailed || api.Kind == scopedb.ErrorKindConfigInvalid {
+			return backend.StatusBadRequest
+		}
+	}
+	return backend.StatusBadGateway
 }
 
 func (d *Datasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

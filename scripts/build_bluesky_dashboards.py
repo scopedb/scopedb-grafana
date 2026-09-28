@@ -179,6 +179,6 @@ for uid,title,panels in [("bluesky-overview","Bluesky · Overview",overview),("b
       "refresh":"1m","time":{"from":"now-1h","to":"now"},"timepicker":{"refresh_intervals":["1m","5m","15m"],"time_options":["5m","15m","1h","6h","12h","24h","7d"]},
       "links":[{"title":"Overview","type":"link","url":"/d/bluesky-overview","keepTime":True,"includeVars":False,"targetBlank":False},
                {"title":"Content explorer","type":"link","url":"/d/bluesky-content","keepTime":True,"includeVars":False,"targetBlank":False}],"panels":panels}
-    path=ROOT/"provisioning/dashboards"/f"{uid}.json"
+    path=ROOT/"examples/provisioning/dashboards"/f"{uid}.json"
     path.write_text(json.dumps(dash,ensure_ascii=False,indent=2)+"\n")
     print(path.relative_to(ROOT))

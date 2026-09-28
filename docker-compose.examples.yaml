@@ -1,0 +1,14 @@
+# Optional fixtures and Bluesky dashboards; the default installation needs neither.
+services:
+  grafana:
+    environment:
+      POC_SCOPEDB_ENDPOINT: ${POC_SCOPEDB_ENDPOINT:-}
+      POC_SCOPEDB_API_KEY: ${POC_SCOPEDB_API_KEY:-}
+      BLUESKY_ENDPOINT: ${BLUESKY_ENDPOINT:-}
+      BLUESKY_API_KEY: ${BLUESKY_API_KEY:-}
+    volumes:
+      - ./examples/provisioning/datasources/datasources.yml:/etc/grafana/provisioning/datasources/fixture.yml:ro
+      - ./examples/provisioning/datasources/bluesky.yml:/etc/grafana/provisioning/datasources/bluesky.yml:ro
+      - ./examples/provisioning/dashboards/scopedb.json:/etc/grafana/provisioning/dashboards/scopedb.json:ro
+      - ./examples/provisioning/dashboards/bluesky-overview.json:/etc/grafana/provisioning/dashboards/bluesky-overview.json:ro
+      - ./examples/provisioning/dashboards/bluesky-content.json:/etc/grafana/provisioning/dashboards/bluesky-content.json:ro

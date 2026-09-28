@@ -1,0 +1,121 @@
+{
+  "uid": "scopedb-getting-started",
+  "title": "ScopeDB \u00b7 Getting started",
+  "schemaVersion": 41,
+  "version": 1,
+  "tags": [
+    "scopedb"
+  ],
+  "timezone": "utc",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "",
+  "templating": {
+    "list": [
+      {
+        "name": "DS_SCOPEDB",
+        "label": "ScopeDB connection",
+        "type": "datasource",
+        "query": "scopedb-scopedb-datasource",
+        "refresh": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "Start querying your workspace",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 5
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "1. Select a **ScopeDB connection** above. A value of **1** below confirms the query path works.\n2. Add a panel, select this data source, and click **Browse tables**.\n3. Choose a database, schema and table; click **Insert table query** or **Insert time series query**.\n4. Run with **Ctrl/Cmd+Enter**, then choose a Grafana visualization.\n\nThese diagnostics do not read or write application tables."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Connection check",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "scopedb-scopedb-datasource",
+        "uid": "${DS_SCOPEDB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "scopedb-scopedb-datasource",
+            "uid": "${DS_SCOPEDB}"
+          },
+          "modelVersion": 2,
+          "format": "table",
+          "queryText": "SELECT 1 AS connected"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Selected time range \u00b7 UTC",
+      "type": "table",
+      "gridPos": {
+        "x": 6,
+        "y": 5,
+        "w": 18,
+        "h": 5
+      },
+      "datasource": {
+        "type": "scopedb-scopedb-datasource",
+        "uid": "${DS_SCOPEDB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "scopedb-scopedb-datasource",
+            "uid": "${DS_SCOPEDB}"
+          },
+          "modelVersion": 2,
+          "format": "table",
+          "queryText": "SELECT $__timeFrom() AS range_start, $__timeTo() AS range_end, $__interval_ms AS bucket_ms"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ]
+}

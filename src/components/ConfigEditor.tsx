@@ -62,7 +62,27 @@ export function ConfigEditor({ onOptionsChange, options }: Props) {
           }
         />
       </InlineField>
-      <p>Save &amp; test runs SELECT 1 AS ok against ScopeDB.</p>
+      <InlineField
+        label="Concurrent queries"
+        labelWidth={20}
+        tooltip="Maximum in-flight requests per data source instance (1–32); queued work shares the query timeout"
+      >
+        <Input
+          id="scopedb-concurrency"
+          type="number"
+          min={1}
+          max={32}
+          width={16}
+          value={options.jsonData.maxConcurrentQueries ?? 4}
+          onChange={(e) =>
+            onOptionsChange({
+              ...options,
+              jsonData: { ...options.jsonData, maxConcurrentQueries: Number(e.currentTarget.value) },
+            })
+          }
+        />
+      </InlineField>
+      <p>Save &amp; test runs SELECT 1 AS ok against ScopeDB. Queries run on the Grafana server using this API key.</p>
     </div>
   );
 }

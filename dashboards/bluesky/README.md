@@ -20,11 +20,11 @@
 
 ## 配置与复现
 
-数据源 UID 为 `scopedb-bluesky`，名称为 `ScopeDB · Bluesky`。`provisioning/datasources/bluesky.yml` 从环境变量注入 endpoint 与 `secureJsonData.apiKey`。专用测试 key 由本机 Scope CLI 创建，名称 `grafana-bluesky-20260928`，有效期 72 小时；密钥仅位于被忽略的 `.local/`，未包含在 dashboard JSON 中。
+数据源 UID 为 `scopedb-bluesky`，名称为 `ScopeDB · Bluesky`。`examples/provisioning/datasources/bluesky.yml` 从环境变量注入 endpoint 与 `secureJsonData.apiKey`。专用测试 key 由本机 Scope CLI 创建，名称 `grafana-bluesky-20260928`，有效期 72 小时；密钥仅位于被忽略的 `.local/`，未包含在 dashboard JSON 中。
 
 1. 在权限为 `0600` 的 `.local/env` 中填写 `BLUESKY_ENDPOINT` 和 `BLUESKY_API_KEY`。
-2. `docker compose --env-file .local/env up -d`，由 Compose 传入变量并 provision 两页 dashboard。
-3. key 到期后创建新 key、更新 `.local/env` 并再次执行上一步，使容器重建。原 PoC 使用独立的 `SCOPEDB_*` 配置。
+2. `make dev-examples`，由 Compose 传入变量并 provision 两页 dashboard。
+3. key 到期后创建新 key、更新 `.local/env` 并再次执行上一步，使容器重建。原 PoC 使用独立的 `POC_SCOPEDB_*` 配置。
 
 迁移到已有 OSS 部署时，先安装 ScopeDB 插件，复制数据源 provisioning 并提供上述变量；复制两份 dashboard JSON 到其 dashboard provider 路径。也可通过 Grafana UI 导入 JSON，但须使用同一数据源 UID，或将 JSON 中的 `scopedb-bluesky` 替换为目标 UID。若只使用原 PoC，可不部署 Bluesky 数据源及这两份 JSON。
 
@@ -39,10 +39,10 @@ python3 scripts/validate_bluesky.py
 
 # 官方 plugin-e2e 检查图表、表格、帖文链接，并生成截图
 NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
-  npx playwright test tests/bluesky.spec.ts --reporter=list
+  SCOPEDB_EXAMPLES=1 npx playwright test tests/bluesky.spec.ts --reporter=list
 ```
 
-生成器：`scripts/build_bluesky_dashboards.py`；查询：本目录 `queries/`；Dashboard：`provisioning/dashboards/bluesky-{overview,content}.json`。验证摘要写入 `artifacts/bluesky-validation.json`，截图保留在 `artifacts/bluesky-*.png`。
+生成器：`scripts/build_bluesky_dashboards.py`；查询：本目录 `queries/`；Dashboard：`examples/provisioning/dashboards/bluesky-{overview,content}.json`。验证摘要写入 `artifacts/bluesky-validation.json`，截图保留在 `artifacts/bluesky-*.png`。
 
 2026-09-28 08:25–09:25 UTC 的真实验证窗口包含 1,034,868 条事件和 397,880 条帖子创建事件。12 个查询全部成功，耗时约 0.5–1.2 秒；事件分类/操作总数与总指标一致，趋势帖数与内容页总数一致。该耗时是一次本机验证结果，不是性能承诺；数据仍在持续增长。
 
