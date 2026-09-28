@@ -1,4 +1,7 @@
 .PHONY: deps check build test test-go lint package
+build: deps
+	npm run build
+	go run github.com/magefile/mage -v build:linux build:linuxARM64
 deps:
 	npm ci --no-audit --no-fund
 check: lint
@@ -6,9 +9,6 @@ check: lint
 	npm test
 	go vet ./pkg/...
 	go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 .github/workflows/ci.yml
-build:
-	npm run build
-	go run github.com/magefile/mage -v build:linux build:linuxARM64
 test: test-go
 	npm test
 test-go:
