@@ -1,0 +1,6 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+AND collection = 'app.bsky.feed.post' AND operation = 'create'
+GROUP BY actor_did AGGREGATE count() AS posts, max(time) AS latest_post
+ORDER BY posts DESC
+LIMIT 12

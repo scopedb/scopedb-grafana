@@ -1,0 +1,8 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+AND collection = 'app.bsky.feed.post' AND operation = 'create'
+SELECT time, language, text[:160] AS text,
+ replace(replace(record_uri, 'at://', 'https://bsky.app/profile/'), '/app.bsky.feed.post/', '/post/') AS post_url,
+ actor_did, external_domain
+ORDER BY time DESC
+LIMIT 50

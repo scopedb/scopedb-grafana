@@ -1,0 +1,5 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+AGGREGATE count() AS events, sum(CASE (collection = 'app.bsky.feed.post' AND operation = 'create') WHEN true THEN 1 ELSE 0 END) AS posts,
+ approx_count_distinct(actor_did) AS active_dids,
+ approx_quantile((received_at - time)::int::float / 1000000.0, quantile => 0.95) AS p95_lag_ms

@@ -1,0 +1,5 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+GROUP BY operation AGGREGATE count() AS events
+ORDER BY events DESC
+LIMIT 10

@@ -1,0 +1,11 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+SELECT (time::int - time::int % 300000000000)::timestamp AS bucket, collection, operation
+GROUP BY bucket AGGREGATE
+ sum(CASE (collection = 'app.bsky.feed.post' AND operation = 'create') WHEN true THEN 1 ELSE 0 END) AS posts,
+ sum(CASE (collection = 'app.bsky.feed.like' AND operation = 'create') WHEN true THEN 1 ELSE 0 END) AS likes,
+ sum(CASE (collection = 'app.bsky.feed.repost' AND operation = 'create') WHEN true THEN 1 ELSE 0 END) AS reposts,
+ sum(CASE (collection = 'app.bsky.graph.follow' AND operation = 'create') WHEN true THEN 1 ELSE 0 END) AS follows
+SELECT bucket AS time, posts, likes, reposts, follows
+ORDER BY time
+LIMIT 10000

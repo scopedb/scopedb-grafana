@@ -1,0 +1,56 @@
+{
+  "uid": "scopedb-oss-poc",
+  "title": "ScopeDB OSS · Table demo",
+  "tags": [
+    "scopedb",
+    "poc"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "",
+  "time": {
+    "from": "2026-09-28T00:00:00Z",
+    "to": "2026-09-28T00:20:00Z"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "ScopeDB events · UTC [from, to)",
+      "type": "table",
+      "datasource": {
+        "type": "scopedb-scopedb-datasource",
+        "uid": "scopedb-poc"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "modelVersion": 1,
+          "queryText": "FROM grafana_oss_poc_20260928\nWHERE $__timeFilter(event_time)\nSELECT event_time, service, latency_ms, success, detail\nORDER BY event_time\nLIMIT 1000"
+        }
+      ]
+    }
+  ]
+}

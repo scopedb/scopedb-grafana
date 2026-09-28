@@ -1,0 +1,1 @@
+CREATE TABLE grafana_oss_poc_20260928 (event_time timestamp, service string, latency_ms int, success boolean, detail string)

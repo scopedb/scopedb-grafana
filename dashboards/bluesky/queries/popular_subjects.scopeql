@@ -1,0 +1,12 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+AND operation = 'create'
+AND (collection = 'app.bsky.feed.like' OR collection = 'app.bsky.feed.repost')
+AND subject_uri IS NOT NULL AND subject_uri != ''
+GROUP BY subject_uri AGGREGATE count() AS observed_interactions,
+ sum(CASE collection WHEN 'app.bsky.feed.like' THEN 1 ELSE 0 END) AS likes,
+ sum(CASE collection WHEN 'app.bsky.feed.repost' THEN 1 ELSE 0 END) AS reposts
+ORDER BY observed_interactions DESC
+LIMIT 15
+SELECT replace(replace(subject_uri, 'at://', 'https://bsky.app/profile/'), '/app.bsky.feed.post/', '/post/') AS post_url,
+ observed_interactions, likes, reposts

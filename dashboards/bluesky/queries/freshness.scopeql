@@ -1,0 +1,4 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+AGGREGATE max(time) AS latest_event, max(received_at) AS latest_received
+SELECT latest_event, latest_received

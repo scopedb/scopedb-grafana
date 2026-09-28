@@ -1,0 +1,7 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+AND collection = 'app.bsky.feed.post' AND operation = 'create'
+SELECT CASE (language IS NULL OR language = '') WHEN true THEN 'Unspecified' ELSE language END AS language
+GROUP BY language AGGREGATE count() AS posts
+ORDER BY posts DESC
+LIMIT 10

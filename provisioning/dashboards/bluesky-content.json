@@ -1,0 +1,1079 @@
+{
+  "uid": "bluesky-content",
+  "title": "Bluesky · Content explorer",
+  "description": "Live analysis of collected Bluesky events in ScopeDB.",
+  "tags": [
+    "scopedb",
+    "bluesky"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "1m",
+      "5m",
+      "15m"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "7d"
+    ]
+  },
+  "links": [
+    {
+      "title": "Overview",
+      "type": "link",
+      "url": "/d/bluesky-overview",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false
+    },
+    {
+      "title": "Content explorer",
+      "type": "link",
+      "url": "/d/bluesky-content",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "",
+      "description": "",
+      "type": "text",
+      "pluginVersion": "13.1.0",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 2
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**BLUESKY / CONTENT EXPLORER** · Observed post creations and interactions · Click post / DID links to open Bluesky"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Post creation in selected time range",
+      "description": "",
+      "type": "stat",
+      "pluginVersion": "13.1.0",
+      "gridPos": {
+        "x": 0,
+        "y": 2,
+        "w": 24,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "posts"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Posts created"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#59C2FF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "authors"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Authors ≈"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#A78BFA"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "posts_with_links"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Posts with external links"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#6AD7A8"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "language_tagged"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Posts with a language tag"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB86B"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "wideLayout": false,
+        "text": {
+          "titleSize": 16,
+          "valueSize": 40
+        }
+      },
+      "datasource": {
+        "type": "scopedb-scopedb-datasource",
+        "uid": "scopedb-bluesky"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "scopedb-scopedb-datasource",
+            "uid": "scopedb-bluesky"
+          },
+          "modelVersion": 1,
+          "queryText": "FROM bluesky_events\nWHERE $__timeFilter(time)\nAND collection = 'app.bsky.feed.post' AND operation = 'create'\nAGGREGATE count() AS posts, approx_count_distinct(actor_did) AS authors,\n sum(CASE (external_domain IS NOT NULL AND external_domain != '') WHEN true THEN 1 ELSE 0 END) AS posts_with_links,\n sum(CASE (language IS NOT NULL AND language != '') WHEN true THEN 1 ELSE 0 END) AS language_tagged"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Latest posts · 50 most recent",
+      "description": "Latest 50 observed post creation events; text previews show the first 160 characters. Column filters apply to fetched rows, not the entire dataset. Open the post or author via the cell link.",
+      "type": "table",
+      "pluginVersion": "13.1.0",
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 175
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "language"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "text"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 480
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "post_url"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "actor_did"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 235
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "external_domain"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Time (UTC)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "language"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Language"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "text"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Post preview"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "actor_did"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Author DID"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "external_domain"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "External domain"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "post_url"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Open post"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_post"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_event"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_received"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "post_url"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open in Bluesky",
+                    "url": "${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "actor_did"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open in Bluesky",
+                    "url": "https://bsky.app/profile/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "text"
+            },
+            "properties": [
+              {
+                "id": "custom.wrapText",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "post_url"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^https://.*",
+                      "result": {
+                        "text": "Open post"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true,
+        "maxRowHeight": 300
+      },
+      "datasource": {
+        "type": "scopedb-scopedb-datasource",
+        "uid": "scopedb-bluesky"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "scopedb-scopedb-datasource",
+            "uid": "scopedb-bluesky"
+          },
+          "modelVersion": 1,
+          "queryText": "FROM bluesky_events\nWHERE $__timeFilter(time)\nAND collection = 'app.bsky.feed.post' AND operation = 'create'\nSELECT time, language, text[:160] AS text,\n replace(replace(record_uri, 'at://', 'https://bsky.app/profile/'), '/app.bsky.feed.post/', '/post/') AS post_url,\n actor_did, external_domain\nORDER BY time DESC\nLIMIT 50"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Most active authors · post creation events",
+      "description": "",
+      "type": "table",
+      "pluginVersion": "13.1.0",
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "actor_did"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "posts"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_post"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "actor_did"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Author DID"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "posts"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Posts"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_post"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Latest post (UTC)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_post"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_event"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_received"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "actor_did"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open in Bluesky",
+                    "url": "https://bsky.app/profile/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "datasource": {
+        "type": "scopedb-scopedb-datasource",
+        "uid": "scopedb-bluesky"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "scopedb-scopedb-datasource",
+            "uid": "scopedb-bluesky"
+          },
+          "modelVersion": 1,
+          "queryText": "FROM bluesky_events\nWHERE $__timeFilter(time)\nAND collection = 'app.bsky.feed.post' AND operation = 'create'\nGROUP BY actor_did AGGREGATE count() AS posts, max(time) AS latest_post\nORDER BY posts DESC\nLIMIT 12"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "External domains · top 10 by post count",
+      "description": "",
+      "type": "barchart",
+      "pluginVersion": "13.1.0",
+      "gridPos": {
+        "x": 12,
+        "y": 19,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#59C2FF"
+          },
+          "unit": "short",
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "fillOpacity": 85,
+            "lineWidth": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xField": "external_domain",
+        "showValue": "always",
+        "groupWidth": 0.75,
+        "barWidth": 0.75,
+        "barRadius": 0.1,
+        "stacking": "none",
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "datasource": {
+        "type": "scopedb-scopedb-datasource",
+        "uid": "scopedb-bluesky"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "scopedb-scopedb-datasource",
+            "uid": "scopedb-bluesky"
+          },
+          "modelVersion": 1,
+          "queryText": "FROM bluesky_events\nWHERE $__timeFilter(time)\nAND collection = 'app.bsky.feed.post' AND operation = 'create'\nAND external_domain IS NOT NULL AND external_domain != ''\nGROUP BY external_domain AGGREGATE count() AS posts\nORDER BY posts DESC\nLIMIT 10"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Most referenced posts · likes + reposts in this window",
+      "description": "",
+      "type": "table",
+      "pluginVersion": "13.1.0",
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "post_url"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 650
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "post_url"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Open post"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "observed_interactions"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Observed interactions"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "likes"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Like events"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "reposts"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Repost events"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_post"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_event"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_received"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "post_url"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open in Bluesky",
+                    "url": "${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "datasource": {
+        "type": "scopedb-scopedb-datasource",
+        "uid": "scopedb-bluesky"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "scopedb-scopedb-datasource",
+            "uid": "scopedb-bluesky"
+          },
+          "modelVersion": 1,
+          "queryText": "FROM bluesky_events\nWHERE $__timeFilter(time)\nAND operation = 'create'\nAND (collection = 'app.bsky.feed.like' OR collection = 'app.bsky.feed.repost')\nAND subject_uri IS NOT NULL AND subject_uri != ''\nGROUP BY subject_uri AGGREGATE count() AS observed_interactions,\n sum(CASE collection WHEN 'app.bsky.feed.like' THEN 1 ELSE 0 END) AS likes,\n sum(CASE collection WHEN 'app.bsky.feed.repost' THEN 1 ELSE 0 END) AS reposts\nORDER BY observed_interactions DESC\nLIMIT 15\nSELECT replace(replace(subject_uri, 'at://', 'https://bsky.app/profile/'), '/app.bsky.feed.post/', '/post/') AS post_url,\n observed_interactions, likes, reposts"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Reading notes",
+      "description": "",
+      "type": "text",
+      "pluginVersion": "13.1.0",
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 24,
+        "h": 3
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Interaction ranking** counts observed like/repost creations in this window; it is not lifetime likes or net engagement. Latest-post text is the recorded creation payload and may differ from the post's current state. Use table column filters to narrow the displayed rows."
+      }
+    }
+  ]
+}

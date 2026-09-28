@@ -1,0 +1,5 @@
+VALUES
+ ('2026-09-28T00:00:00Z'::timestamp, 'api', 12, true, 'lower boundary'),
+ ('2026-09-28T00:10:00Z'::timestamp, 'worker', NULL, false, NULL),
+ ('2026-09-28T00:20:00Z'::timestamp, 'api', 25, true, 'upper boundary')
+INSERT INTO grafana_oss_poc_20260928

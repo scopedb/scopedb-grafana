@@ -1,0 +1,7 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+AND collection = 'app.bsky.feed.post' AND operation = 'create'
+AND external_domain IS NOT NULL AND external_domain != ''
+GROUP BY external_domain AGGREGATE count() AS posts
+ORDER BY posts DESC
+LIMIT 10

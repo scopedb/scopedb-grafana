@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "ScopeDB",
+  "id": "scopedb-scopedb-datasource",
+  "metrics": true,
+  "backend": true,
+  "executable": "gpx_scope_db",
+  "info": {
+    "description": "Query ScopeDB with ScopeQL and display table results. Internal OSS proof of concept.",
+    "author": {
+      "name": "Scopedb"
+    },
+    "keywords": ["datasource"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": "13.1.0",
+    "plugins": []
+  },
+  "logs": false,
+  "alerting": false
+}

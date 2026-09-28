@@ -1,0 +1,10 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+SELECT (time::int - time::int % 300000000000)::timestamp AS bucket, (received_at - time)::int::float / 1000000.0 AS lag_ms
+GROUP BY bucket AGGREGATE
+ approx_quantile(lag_ms, quantile => 0.5) AS p50_ms,
+ approx_quantile(lag_ms, quantile => 0.95) AS p95_ms,
+ approx_quantile(lag_ms, quantile => 0.99) AS p99_ms
+SELECT bucket AS time, p50_ms, p95_ms, p99_ms
+ORDER BY time
+LIMIT 10000

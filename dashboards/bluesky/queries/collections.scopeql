@@ -1,0 +1,11 @@
+FROM bluesky_events
+WHERE $__timeFilter(time)
+SELECT CASE collection
+ WHEN 'app.bsky.feed.post' THEN 'Posts'
+ WHEN 'app.bsky.feed.like' THEN 'Likes'
+ WHEN 'app.bsky.feed.repost' THEN 'Reposts'
+ WHEN 'app.bsky.graph.follow' THEN 'Follows'
+ ELSE collection END AS event_type
+GROUP BY event_type AGGREGATE count() AS events
+ORDER BY events DESC
+LIMIT 10
