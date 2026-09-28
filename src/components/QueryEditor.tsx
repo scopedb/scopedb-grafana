@@ -1,4 +1,5 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import {
   Alert,
   Button,
@@ -98,23 +99,17 @@ export function QueryEditor({ query, datasource, onChange, onRunQuery, data }: P
       .getVariables()
       .map((v) => ({ label: '${' + v.name + '}', kind: CodeEditorSuggestionItemKind.Property })),
   ];
-  const insertTable = () => {
-    if (!table) {
+  const runTemplate = (format: QueryFormat) => {
+    if (!table || (format === 'time_series' && !table.timeColumn)) {
       return;
     }
-    change({
-      format: 'table',
-      queryText: `FROM ${table.identifier}\n${table.timeColumn ? `WHERE $__timeFilter(${table.timeColumn})\n` : ''}SELECT *\n${table.timeColumn ? `ORDER BY ${table.timeColumn} DESC\n` : ''}LIMIT 1000`,
-    });
-  };
-  const insertSeries = () => {
-    if (!table?.timeColumn) {
-      return;
-    }
-    change({
-      format: 'time_series',
-      queryText: `FROM ${table.identifier}\nWHERE $__timeFilter(${table.timeColumn})\nSELECT $__timeGroup(${table.timeColumn}) AS time\nGROUP BY time AGGREGATE count() AS events\nORDER BY time\nLIMIT 10000`,
-    });
+    const queryText =
+      format === 'time_series'
+        ? `FROM ${table.identifier}\nWHERE $__timeFilter(${table.timeColumn})\nSELECT $__timeGroup(${table.timeColumn}) AS time\nGROUP BY time AGGREGATE count() AS events\nORDER BY time\nLIMIT 10000`
+        : `FROM ${table.identifier}\n${table.timeColumn ? `WHERE $__timeFilter(${table.timeColumn})\n` : ''}SELECT *\n${table.timeColumn ? `ORDER BY ${table.timeColumn} DESC\n` : ''}LIMIT 1000`;
+    // Grafana must receive the new query and format before it starts the request.
+    flushSync(() => change({ format, queryText }));
+    callbacks.current.onRunQuery();
   };
   return (
     <div data-testid="scopedb-query-editor">
@@ -131,11 +126,11 @@ export function QueryEditor({ query, datasource, onChange, onRunQuery, data }: P
             onChange={(v) => change({ format: v.value as QueryFormat })}
           />
         </InlineField>
-        <Button variant="secondary" size="sm" disabled={!table} onClick={insertTable}>
-          Insert table query
+        <Button variant="secondary" size="sm" disabled={!table} onClick={() => runTemplate('table')}>
+          Run table query
         </Button>
-        <Button variant="secondary" size="sm" disabled={!table?.timeColumn} onClick={insertSeries}>
-          Insert time series query
+        <Button variant="secondary" size="sm" disabled={!table?.timeColumn} onClick={() => runTemplate('time_series')}>
+          Run time series query
         </Button>
         <Button size="sm" onClick={onRunQuery}>
           Run query

@@ -28,7 +28,7 @@ jobs:
       - run: make package
       - uses: actions/upload-artifact@v4
         with:
-          name: scopedb-grafana-unsigned-linux-amd64
+          name: scopedb-grafana-unsigned-linux
           path: dist/*.zip*
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -39,15 +39,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: scopedb-grafana-unsigned-linux-amd64
+          name: scopedb-grafana-unsigned-linux
           path: dist
-      - name: Publish release
+      - name: Create release draft
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           args=()
           if [[ "$GITHUB_REF_NAME" == *-* ]]; then args+=(--prerelease); fi
           gh release create "$GITHUB_REF_NAME" dist/* \
-            --repo "$GITHUB_REPOSITORY" --verify-tag --title "$GITHUB_REF_NAME" \
-            --notes "Unsigned Linux amd64 build for Grafana OSS 13.1.0. [Installation](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/README.md#install)." \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "$GITHUB_REF_NAME" \
+            --notes "Unsigned Linux amd64/arm64 build. [Compatibility and installation](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/README.md#install)." \
             "${args[@]}"

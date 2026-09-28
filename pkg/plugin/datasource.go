@@ -280,7 +280,18 @@ func (d *Datasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequ
 		}
 	}
 	if err != nil {
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: d.safeError(err)}, nil
+		message := d.safeError(err)
+		var api *scopedb.Error
+		var network *url.Error
+		switch {
+		case errors.As(err, &api) && (api.HTTPStatus == 401 || api.HTTPStatus == 403):
+			message = "Authentication failed. Check the API key and its access to this workspace."
+		case errors.Is(err, context.DeadlineExceeded):
+			message = "Connection test timed out. Check the endpoint and network access, or increase the timeout under Advanced."
+		case errors.As(err, &network):
+			message = "Cannot reach ScopeDB. Check the endpoint and network access from the Grafana server."
+		}
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: message}, nil
 	}
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "ScopeDB connected; SELECT 1 AS ok succeeded"}, nil
 }

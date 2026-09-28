@@ -176,6 +176,9 @@ export function SchemaBrowser({ datasource, idPrefix, onSelect }: Props) {
               {error}. You can still enter ScopeQL directly.
             </Alert>
           )}
+          {!loading && !error && state.tables.length === 0 && (
+            <p>No tables found. Choose another database or schema, or add data to your workspace.</p>
+          )}
           {state.columns.length > 0 && (
             <>
               <InlineField label="Time column">

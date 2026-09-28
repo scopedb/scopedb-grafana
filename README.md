@@ -6,7 +6,7 @@ storage; queries run through the Go backend.
 
 ## Install
 
-Requires Grafana OSS 13.1.0 on Linux amd64. The plugin is unsigned; Grafana Cloud,
+Supports Grafana OSS 13.1–13.2 on Linux amd64 and arm64. The plugin is unsigned; Grafana Cloud,
 alerting, a dedicated logs mode, and ad hoc filters are unsupported.
 
 1. Download the plugin ZIP from [Releases](https://github.com/scopedb/scopedb-grafana/releases). Private repository downloads require GitHub access.
@@ -19,10 +19,10 @@ permissions; the plugin does not enforce read-only access.
 
 ## Query
 
-Open **Explore**, select the data source, and run the default `SELECT 1 AS ok`.
-For your data, **Browse tables**, select a table and time column, then **Insert table query**
-or **Insert time series query** and **Run query**. Choose a Grafana time range containing
-your data. You can also enter ScopeQL directly and press **Ctrl/Cmd+Enter**.
+Open **Explore**, select the data source, and **Browse tables**. Select a table, then
+**Run table query** or **Run time series query** to generate and run a query in one click.
+Time series needs a timestamp column. Choose the right **Time column** and a Grafana
+time range containing your data. You can also enter ScopeQL and press **Ctrl/Cmd+Enter**.
 
 Choose **Time series** for one timestamp, numeric values, and optional string/boolean
 labels. Aggregate to one row per timestamp and label set. **Table** is the default.
@@ -49,7 +49,8 @@ workspace credentials. `npm run dev` watches frontend changes. Validate queries 
 catalog browsing in Grafana against a development workspace before releasing.
 
 To release, update the version in `package.json` and `package-lock.json`, commit, and
-push a matching `v<version>` tag. CI checks the version, builds and tests, then publishes
-the ZIP with SHA-1 and SHA-256 checksums to GitHub Releases. Tags containing `-` create
-prereleases. [Catalog publication](https://grafana.com/developers/plugin-tools/publish-a-plugin/publish-a-plugin)
+push a matching `v<version>` tag. CI checks the version, builds and tests, then creates
+a release draft with the ZIP and SHA-1/SHA-256 checksums. Publish the draft after Grafana
+acceptance checks; tags containing `-` mark prereleases.
+[Catalog publication](https://grafana.com/developers/plugin-tools/publish-a-plugin/publish-a-plugin)
 requires accessible source and package URLs, Grafana review, and signing approval.

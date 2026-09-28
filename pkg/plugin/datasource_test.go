@@ -168,6 +168,39 @@ func TestErrorsStayOnTheirRefID(t *testing.T) {
 	require.Error(t, res.Responses["B"].Error)
 }
 
+func TestHealthGuidesConnectionRecovery(t *testing.T) {
+	for _, status := range []int{401, 403} {
+		ds := testDS(t, func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(status)
+			fmt.Fprint(w, `{"message":"test-secret rejected"}`)
+		})
+		result, err := ds.CheckHealth(context.Background(), nil)
+		require.NoError(t, err)
+		require.Equal(t, backend.HealthStatusError, result.Status)
+		require.Contains(t, result.Message, "Check the API key")
+		require.NotContains(t, result.Message, "test-secret")
+	}
+	server := httptest.NewServer(http.NotFoundHandler())
+	cfg, err := json.Marshal(settings{Endpoint: server.URL})
+	require.NoError(t, err)
+	server.Close()
+	instance, err := NewDatasource(context.Background(), backend.DataSourceInstanceSettings{
+		JSONData: cfg, DecryptedSecureJSONData: map[string]string{"apiKey": "test-secret"},
+	})
+	require.NoError(t, err)
+	ds := instance.(*Datasource)
+	t.Cleanup(ds.Dispose)
+	result, err := ds.CheckHealth(context.Background(), nil)
+	require.NoError(t, err)
+	require.Equal(t, backend.HealthStatusError, result.Status)
+	require.Contains(t, result.Message, "network access from the Grafana server")
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+	result, err = ds.CheckHealth(ctx, nil)
+	require.NoError(t, err)
+	require.Contains(t, result.Message, "timeout under Advanced")
+}
+
 func TestCatalogRoutesAndErrors(t *testing.T) {
 	ds := testDS(t, func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, "Bearer test-secret", r.Header.Get("Authorization"))
