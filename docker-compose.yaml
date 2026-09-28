@@ -1,0 +1,23 @@
+name: scopedb-grafana
+services:
+  grafana:
+    image: grafana/grafana:13.1.0
+    platform: linux/amd64
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-13000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: scopedb-scopedb-datasource
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      SCOPEDB_ENDPOINT: ${SCOPEDB_ENDPOINT:-}
+      SCOPEDB_API_KEY: ${SCOPEDB_API_KEY:-}
+    volumes:
+      - ${PLUGIN_DIR:-./dist}:/var/lib/grafana/plugins/scopedb-scopedb-datasource:ro
+      - ./provisioning/datasources/datasources.yml:/etc/grafana/provisioning/datasources/scopedb.yml:ro
+      - ./provisioning/dashboards/provider.yml:/etc/grafana/provisioning/dashboards/provider.yml:ro
+      - ./provisioning/dashboards/getting-started.json:/etc/grafana/provisioning/dashboards/getting-started.json:ro
+      - grafana-data:/var/lib/grafana
+volumes:
+  grafana-data:
