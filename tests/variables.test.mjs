@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { formatVariable, interpolateVariables, quoteScopeQL } from '../src/variables.ts';
+import { formatVariable, interpolateVariables, quoteScopeQL } from '../src/query/variables.ts';
 
 const templates = (value, allValue) => ({
   getVariables: () => [{ name: 'value', type: 'query', allValue }],

@@ -26,9 +26,20 @@ read-only access.
 **Time series** needs a timestamp column; **Table** works without one.
 You can also edit ScopeQL directly and press **Ctrl/Cmd+Enter** to run.
 
+Generated queries replace the editor contents and run immediately. Clear the time
+column to query a table without applying the Grafana time range. **Reload catalog**
+preserves valid selections; **Retry** resumes the failed catalog step. Catalog
+errors do not prevent you from editing ScopeQL directly.
+
 ## Limits
 
 - 10,000 rows, 16 MiB per query HTTP response, and 500 series groups.
 - **Advanced** settings: 30s timeout (1–300s, including queue time), 4 concurrent queries (1–32).
 - Cancellation attempts to stop the server query; submission is not retried.
 - Unsigned plugin. Grafana Cloud, alerting, a dedicated logs mode, and ad hoc filters are unsupported.
+
+## Develop
+
+Run `make build up` to build the plugin and start local Grafana, then `make dev`
+to watch frontend changes. See the [development guide](https://github.com/scopedb/scopedb-grafana/blob/main/CONTRIBUTING.md)
+for setup, the project map, checks, and packaging.

@@ -1,5 +1,5 @@
 {
   "extends": "@grafana/tsconfig",
-  "compilerOptions": { "noEmit": true },
+  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true },
   "include": ["src"]
 }
