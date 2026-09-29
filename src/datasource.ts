@@ -9,8 +9,9 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { lastValueFrom } from 'rxjs';
-import { CatalogColumn, CatalogItem, CatalogPage, ScopeDBOptions, ScopeDBQuery, DEFAULT_QUERY } from './types';
-import { interpolateVariables } from './variables';
+import { ScopeDBOptions, ScopeDBQuery, DEFAULT_QUERY } from './types';
+import type { CatalogColumn, CatalogItem, CatalogPage } from './catalog/types';
+import { interpolateVariables } from './query/variables';
 
 export class DataSource extends DataSourceWithBackend<ScopeDBQuery, ScopeDBOptions> {
   getDefaultQuery(_: CoreApp): Partial<ScopeDBQuery> {

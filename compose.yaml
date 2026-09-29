@@ -1,0 +1,22 @@
+services:
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION:-13.1.5}
+    ports:
+      - '127.0.0.1:${GRAFANA_PORT:-3000}:3000'
+    environment:
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: scopedb-scopedb-datasource
+      GF_PLUGINS_PREINSTALL_DISABLED: 'true'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:3000/api/health']
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 20
+    volumes:
+      - ./dist:/var/lib/grafana/plugins/scopedb-scopedb-datasource:ro
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  grafana-data:

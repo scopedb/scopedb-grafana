@@ -16,14 +16,3 @@ export interface ScopeDBOptions extends DataSourceJsonData {
 export interface ScopeDBSecureOptions {
   apiKey?: string;
 }
-export interface CatalogItem {
-  name: string;
-  comment?: string | null;
-}
-export interface CatalogColumn extends CatalogItem {
-  data_type: string;
-}
-export interface CatalogPage {
-  items: CatalogItem[];
-  next_page_token?: string;
-}
