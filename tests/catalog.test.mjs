@@ -104,6 +104,27 @@ test('empty databases and schemas stop loading their descendants', async () => {
   }
 });
 
+test('reloading after a catalog failure retains the last selected schema, table and time column', async () => {
+  const { catalog, client } = fixture();
+  await catalog.refresh();
+  await catalog.selectSchema('custom');
+  await catalog.selectTable('events');
+  catalog.selectTimeColumn('created_at');
+  const original = client.catalog;
+  client.catalog = async (level, params) => {
+    if (level === 'schemas') {
+      throw new Error('Temporary catalog failure');
+    }
+    return original(level, params);
+  };
+  await catalog.refresh();
+  assert.equal(catalog.getSnapshot().error, 'Temporary catalog failure');
+  client.catalog = original;
+  await catalog.refresh();
+  const state = catalog.getSnapshot();
+  assert.deepEqual([state.schema, state.table, state.timeColumn], ['custom', 'events', 'created_at']);
+});
+
 test('refresh clears a removed table and selects a remaining timestamp if the selected column disappeared', async () => {
   const { catalog, client } = fixture();
   await catalog.refresh();

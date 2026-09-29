@@ -51,7 +51,7 @@ export class CatalogController {
   cancel = () => {
     this.revision++;
   };
-  refresh = () => this.load('databases', this.state);
+  refresh = () => this.load('databases', this.failed?.preferred ?? this.state);
   retry = () => (this.failed ? this.load(this.failed.level, this.failed.preferred) : Promise.resolve());
   selectDatabase = (database: string) =>
     this.load('schemas', { ...this.state, database, schema: '', table: '', timeColumn: '' });
